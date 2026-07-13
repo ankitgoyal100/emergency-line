@@ -7,8 +7,12 @@ on:
     # M1 (+ heartbeat) ~every 30 min, offset OFF the congested :00/:30 slot.
     # Off-peak offsets can reduce scheduler contention, but scheduled runs and
     # external heartbeat alerts can still be delayed or fail independently.
-    - cron: '7,37 * * * *'   # M1 (+ heartbeat) ~every 30 min (off-peak offset)
-    - cron: '0 */12 * * *'   # M3 deep E2E every 12h
+    # These offsets also deliberately differ from the original schedule. A
+    # cron edit forces GitHub to refresh its internal schedule registration if
+    # a newly created/rebuilt repository has an active workflow but emits no
+    # `schedule` events.
+    - cron: '11,41 * * * *'  # M1 (+ heartbeat) ~every 30 min (off-peak offset)
+    - cron: '23 */12 * * *'  # M3 deep E2E every 12h (away from :00 load)
   workflow_dispatch:
 
 permissions:
@@ -63,7 +67,7 @@ jobs:
           INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
         run: node monitor/check-config.js
       - name: M3 deep E2E (12h tick only)
-        if: github.event.schedule == '0 */12 * * *'
+        if: github.event.schedule == '23 */12 * * *'
         env:
           TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
           TWILIO_API_KEY: ${{ secrets.TWILIO_API_KEY }}
