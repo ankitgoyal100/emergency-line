@@ -49,7 +49,7 @@ call leg separately, and may add carrier fees and taxes.
 | Twilio local numbers | One active line plus one synthetic-test line at $1.15 each | **$2.30/month** |
 | Forwarded voice calls | $0.0085/min inbound plus $0.0140/min outbound | **$0.0225/connected minute** |
 | Synthetic voice monitoring | Supplied M3 check enabled twice daily; about 60 one-minute, two-leg calls/month | **$1.35/month** |
-| Twilio Functions | First 10,000 invocations/month are free; then $0.0001/invocation | **Usually $0** at light personal usage; a 3-minute HTTP monitor alone is about 14,400 invocations/month, or about **$0.44** beyond that allowance |
+| Twilio Functions | First 10,000 invocations/month are free; then $0.0001/invocation | **Usually $0** at light personal usage. One request every 5 minutes is about 8,640/month; four regional requests at that cadence would be about 34,560/month, or about **$2.46** beyond the allowance |
 | GitHub Actions monitoring | Standard GitHub-hosted runner in a public repository | **$0** |
 | External HTTP/heartbeat monitor | Optional; Better Stack and similar providers may offer a sufficient free tier | **Often $0; provider-dependent** |
 | Call recording | Recording plus retained storage | **$0.0025/min + $0.0005/stored min/month** |
