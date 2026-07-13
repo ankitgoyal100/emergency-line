@@ -37,8 +37,8 @@
     "deploy": "node scripts/deploy.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "twilio": "^5.3.0"
+    "dotenv": "^17.4.2",
+    "twilio": "^6.0.2"
   },
   "devDependencies": {
     "twilio-run": "5.0.1"
