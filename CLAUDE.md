@@ -14,7 +14,7 @@ The project intentionally has no caller allowlist. Anyone who knows a deployed n
 - `functions/health.js` — public URL with a secret-token check.
 - `functions/*.private.js` — non-routable shared handler logic.
 - `src/` — the local Twilio provisioning and number-management CLI.
-- `monitor/` — configuration, Function-response, synthetic-call, heartbeat, and alert helpers.
+- `monitor/` — configuration, Function-response, synthetic-call, and alert helpers.
 - `test/` — `node:test` tests using dependency-injected fakes; tests must not make live network requests or buy resources.
 - `.github/workflows/` — CI and optional scheduled monitoring.
 - `docs/CONFIGURATION.md` — credential provenance, environment schema, and rotation boundaries.
@@ -27,7 +27,7 @@ The project intentionally has no caller allowlist. Anyone who knows a deployed n
 
 - Run `npm test` and keep the offline suite green.
 - Keep the package marked `private` to prevent accidental npm publication.
-- Never commit `.env`, `.twilio-functions.env`, `.twiliodeployinfo`, real phone numbers, credentials, webhook/heartbeat tokens, provider IDs, carrier-campaign records, personalized compliance pages, or operator runbooks.
+- Never commit `.env`, `.twilio-functions.env`, `.twiliodeployinfo`, real phone numbers, credentials, webhook tokens, provider IDs, carrier-campaign records, personalized compliance pages, or operator runbooks.
 - Use fake `+1555…` numbers and placeholder `AC…`/`SK…` identifiers in examples.
 - Validate configuration before any network mutation.
 - Show a resource/cost preview and require explicit confirmation before buying or releasing a number. `--dry-run` must not mutate provider state; `--yes` must be explicit.

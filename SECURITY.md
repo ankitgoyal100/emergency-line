@@ -29,7 +29,7 @@ Changes deserve extra scrutiny when they affect:
 - the call-forwarding destination or caller ID;
 - SMS opt-out and carrier-registration behavior;
 - voicemail URLs, recordings, and logs;
-- health tokens, heartbeat URLs, and GitHub Actions secrets; or
+- health tokens and GitHub Actions secrets; or
 - claims about emergency delivery, privacy, consent, or compliance.
 
 Never test a vulnerability against a deployment you do not own or have explicit permission to test.

@@ -32,7 +32,7 @@ function evaluateConfig({ active, test, functionUrl, accountStatus, balance, min
 }
 
 async function main() {
-  require('dotenv').config();
+  require('dotenv').config({ quiet: true });
   const tc = require('../src/twilio-client.js');
   const { getTags } = require('../src/tags.js');
   const client = tc.createClient({

@@ -47,7 +47,7 @@ The checks cover different layers and should not be described interchangeably:
 
 ### Optional GitHub Actions monitor
 
-The included workflow runs `check:config` about every 30 minutes and a billable `check:e2e` about every 12 hours, then pings an external heartbeat only after the applicable checks succeed. Scheduled workflows run from the default branch. A manual `workflow_dispatch` runs the configuration check and heartbeat; the current workflow intentionally reserves the synthetic call for its 12-hour scheduled event.
+The included workflow runs `check:config` about every 30 minutes and a billable `check:e2e` about every 12 hours. Scheduled workflows run from the default branch. A manual `workflow_dispatch` runs only the configuration check; the workflow intentionally reserves the synthetic call for its 12-hour scheduled event.
 
 To use it, the deployment owner needs a GitHub repository they control (the canonical repository or their own reviewed fork), because a local clone cannot store Actions secrets or run schedules. Updating a local clone later does not update that repository’s workflow; review and merge/push workflow upgrades separately.
 
@@ -58,16 +58,15 @@ Forks do not inherit repository secrets, and scheduled workflows are disabled by
 - `TWILIO_API_SECRET`
 - `TWILIO_AUTH_TOKEN`
 - `FUNCTION_URL`
-- `HEARTBEAT_URL`
 - `INSTANCE_ID` when the deployment uses one (recommended); it must exactly match `.env`
 
 Add them under the controlled repository’s **Settings → Secrets and variables → Actions**, then review and enable **Actions → Emergency Line Monitor**. Confirm the first configuration-only run succeeds before waiting for the schedule. Do not put the owner’s destination number in Actions; the supplied workflow does not require it.
 
 The workflow deliberately does not store `YOUR_REAL_NUMBER`, so it does not run `check:function`. Run that check from the private operator environment.
 
-Choose an external dead-man monitor that expects the heartbeat interval with enough grace for GitHub scheduler delays, configure a real alert destination, and test the alert path. The `HEARTBEAT_URL` is a secret. GitHub documents that [public-repository schedules can be disabled after 60 days without repository activity](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows); review the workflow state periodically.
+GitHub documents that [public-repository schedules can be disabled after 60 days without repository activity](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows); review the workflow state periodically. The independent HTTP health monitor below is the primary non-ringing availability alarm and does not depend on GitHub's scheduler.
 
-If you do not want the recurring synthetic-call cost or do not have an external heartbeat provider, keep the workflow disabled or review and customize it before enabling. A missing/placeholder heartbeat secret makes the supplied workflow fail closed.
+If you do not want the recurring synthetic-call cost, keep the workflow disabled or review and customize it before enabling.
 
 ### Optional HTTP health monitor
 
