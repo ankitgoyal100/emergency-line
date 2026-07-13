@@ -49,9 +49,9 @@ call leg separately, and may add carrier fees and taxes.
 | Twilio local numbers | One active line plus one synthetic-test line at $1.15 each | **$2.30/month** |
 | Forwarded voice calls | $0.0085/min inbound plus $0.0140/min outbound | **$0.0225/connected minute** |
 | Synthetic voice monitoring | Supplied M3 check enabled twice daily; about 60 one-minute, two-leg calls/month | **$1.35/month** |
-| Twilio Functions | First 10,000 invocations/month are free; then $0.0001/invocation | **Usually $0** at light personal usage |
+| Twilio Functions | First 10,000 invocations/month are free; then $0.0001/invocation | **Usually $0** at light personal usage; a 3-minute HTTP monitor alone is about 14,400 invocations/month, or about **$0.44** beyond that allowance |
 | GitHub Actions monitoring | Standard GitHub-hosted runner in a public repository | **$0** |
-| External heartbeat monitor | Optional; depends on the provider and plan you choose | **Provider-dependent** |
+| External HTTP/heartbeat monitor | Optional; Better Stack and similar providers may offer a sufficient free tier | **Often $0; provider-dependent** |
 | Call recording | Recording plus retained storage | **$0.0025/min + $0.0005/stored min/month** |
 | SMS traffic, if enabled | US long-code inbound or outbound SMS | **$0.0083/segment + carrier fees** |
 | Sole Proprietor A2P, if needed for US SMS | $4 Brand registration and $15 Campaign vetting; then $2/month | **About $19 once + $2/month** |
@@ -209,11 +209,12 @@ See [SMS and US A2P registration](docs/SMS-A2P.md) and the [neutral legal templa
 
 The repository includes three different checks:
 
+- `/health` is a token-protected provider check for exact tagged-number inventory, test-number identity, voice/SMS webhook drift, HTTP methods, Twilio account status, and a balance of at least $5. It does not place a call or send a text.
 - `check:config` checks both retained numbers’ webhook configuration and the account balance.
 - `check:function` asks the deployed Function for forwarding TwiML and verifies the destination. It does not place a call.
 - `check:e2e` first sends a signed, non-ringing webhook probe and refuses to originate when the deployed Function does not prove that the exact tagged test number will be sunk. With explicit `--yes`, it then places a billable synthetic call from the test number to the dedicated number.
 
-The included GitHub Actions monitor can run configuration and synthetic checks and ping an external heartbeat. Forks do not inherit secrets. If you use it, configure the repository secrets named in `.github/workflows/monitor.yml`; when `INSTANCE_ID` is set locally, add a matching `INSTANCE_ID` repository secret as well. Enable Actions failure notifications, set up an independent dead-man alert for the heartbeat, and review scheduled-workflow status periodically.
+For the non-ringing baseline, prefer an independent HTTPS monitor that requests `/health` and requires both HTTP 200 and the exact success marker `emergency-line-m1-ok`. This removes GitHub's scheduler from the basic availability alarm path. The included GitHub Actions monitor can separately run configuration and billable synthetic checks and ping an external heartbeat, but scheduled workflows may be delayed or dropped. Forks do not inherit secrets. If you use it, configure the repository secrets named in `.github/workflows/monitor.yml`; when `INSTANCE_ID` is set locally, add a matching `INSTANCE_ID` repository secret as well. Enable Actions failure notifications, set up an independent dead-man alert for the heartbeat, and review scheduled-workflow status periodically.
 
 No automated check verifies the owner’s speaker, volume, contact, battery, mobile service, or attention. Keep a recurring reminder for the physical ring test.
 
