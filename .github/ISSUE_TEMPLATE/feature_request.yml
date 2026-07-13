@@ -1,0 +1,37 @@
+name: Feature request
+description: Suggest a focused improvement for the self-hosted project
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep proposals simple and single-owner. A public SaaS, shared billing, and multi-tenant accounts are outside this project’s scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What self-hosting problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include cost, abuse, privacy, destructive-action, and failure-mode implications.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Simpler alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: The proposal preserves a self-hosted, single-owner architecture.
+          required: true
+        - label: The proposal does not claim guaranteed emergency delivery or response.
+          required: true

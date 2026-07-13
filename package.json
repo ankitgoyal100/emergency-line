@@ -1,0 +1,50 @@
+{
+  "name": "emergency-line",
+  "version": "0.1.1",
+  "description": "A self-hosted emergency phone line that forwards urgent calls and messages to your phone.",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankitgoyal100/emergency-line.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ankitgoyal100/emergency-line/issues"
+  },
+  "homepage": "https://github.com/ankitgoyal100/emergency-line#readme",
+  "keywords": [
+    "emergency",
+    "twilio",
+    "self-hosted",
+    "voice",
+    "sms"
+  ],
+  "type": "commonjs",
+  "engines": {
+    "node": "^22.0.0"
+  },
+  "scripts": {
+    "test": "node --test",
+    "setup": "node src/cli.js setup",
+    "swap": "node src/cli.js swap",
+    "release-numbers": "node src/cli.js release-numbers",
+    "sms-readiness": "node src/cli.js sms-readiness",
+    "status": "node src/cli.js status",
+    "ring-test": "node src/cli.js ring-test",
+    "check:config": "node monitor/check-config.js",
+    "check:function": "node monitor/check-function.js",
+    "check:e2e": "node monitor/check-e2e.js",
+    "deploy": "node scripts/deploy.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "twilio": "^5.3.0"
+  },
+  "devDependencies": {
+    "twilio-run": "5.0.1"
+  },
+  "overrides": {
+    "cross-spawn": "6.0.6",
+    "file-type": "21.3.4"
+  }
+}

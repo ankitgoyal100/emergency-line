@@ -1,0 +1,85 @@
+name: Emergency Line Monitor
+
+# Scheduled uptime monitor (M1 config + M3 deep E2E) with heartbeat dead-man's-switch.
+# A manual dispatch runs M1 and the heartbeat only; it never runs M3.
+on:
+  schedule:
+    # M1 (+ heartbeat) ~every 30 min, offset OFF the congested :00/:30 slot.
+    # Off-peak offsets can reduce scheduler contention, but scheduled runs and
+    # external heartbeat alerts can still be delayed or fail independently.
+    - cron: '7,37 * * * *'   # M1 (+ heartbeat) ~every 30 min (off-peak offset)
+    - cron: '0 */12 * * *'   # M3 deep E2E every 12h
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emergency-line-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Check required secrets
+        shell: bash
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_API_KEY: ${{ secrets.TWILIO_API_KEY }}
+          TWILIO_API_SECRET: ${{ secrets.TWILIO_API_SECRET }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          FUNCTION_URL: ${{ secrets.FUNCTION_URL }}
+          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
+        run: |
+          missing=()
+          for name in TWILIO_ACCOUNT_SID TWILIO_API_KEY TWILIO_API_SECRET TWILIO_AUTH_TOKEN FUNCTION_URL HEARTBEAT_URL; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required repository secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+      - name: M1 config check
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_API_KEY: ${{ secrets.TWILIO_API_KEY }}
+          TWILIO_API_SECRET: ${{ secrets.TWILIO_API_SECRET }}
+          FUNCTION_URL: ${{ secrets.FUNCTION_URL }}
+          INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
+        run: node monitor/check-config.js
+      - name: M3 deep E2E (12h tick only)
+        if: github.event.schedule == '0 */12 * * *'
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_API_KEY: ${{ secrets.TWILIO_API_KEY }}
+          TWILIO_API_SECRET: ${{ secrets.TWILIO_API_SECRET }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          FUNCTION_URL: ${{ secrets.FUNCTION_URL }}
+          INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
+        run: node monitor/check-e2e.js --yes
+      # Heartbeat is LAST and success-gated (no `if:`, so it runs only when every
+      # prior non-skipped step succeeded). This makes it a backup alert channel:
+      # a failed M1/M3 check skips this ping, and the uptime SaaS alerts on the
+      # missing heartbeat — independent of the GitHub failure email. A dead or
+      # auto-disabled workflow also stops pinging, so the SaaS catches that too.
+      # (A skipped M3 on the 30-min tick does not count as a failure, so the
+      # heartbeat still pings on those ticks.)
+      - name: Heartbeat (ping on success; a failed check skips it so the SaaS alerts)
+        env:
+          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
+        run: node monitor/heartbeat.js

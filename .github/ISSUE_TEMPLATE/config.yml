@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/ankitgoyal100/emergency-line/security/advisories/new
+    about: Report vulnerabilities privately through GitHub Private Vulnerability Reporting.
+  - name: Twilio account and carrier support
+    url: https://help.twilio.com/
+    about: Ask Twilio about billing, account verification, number availability, registration, or delivery.

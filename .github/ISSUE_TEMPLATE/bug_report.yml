@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a reproducible software problem without private deployment data
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project is not an emergency service. Do not use this form during an emergency.
+
+        Remove real phone numbers, credentials, Twilio IDs, private URLs, recordings, and message/call contents. Report vulnerabilities privately through the Security tab.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Setup or deployment
+        - Voice forwarding
+        - SMS (registration already complete)
+        - Monitoring
+        - Swap or teardown
+        - Tests or documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the behavior and what you expected. Redact all private values.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Prefer an offline reproduction. Do not instruct maintainers to contact a real number or mutate your provider account.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs
+      render: shell
+      description: Remove tokens, credentials, numbers, provider IDs, URLs, recordings, and communications.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed private deployment information and personal communications.
+          required: true
+        - label: This is not a security vulnerability or active emergency.
+          required: true
