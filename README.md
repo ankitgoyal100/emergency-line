@@ -40,6 +40,32 @@ Anyone who knows the dedicated number can call or text it. There is intentionall
 
 Running this project creates charges in **your** Twilio account. Setup normally purchases two local numbers: the dedicated line and a synthetic-test line. Calls can incur an inbound leg and a simultaneous outbound leg; retries, SMS segments, recordings, recording storage, carrier fees, registration, Functions usage, and monitoring can add charges. Twilio pricing and carrier rules change, so review [Twilio’s current Voice pricing](https://www.twilio.com/en-us/voice/pricing/us), Messaging/A2P pricing, and the fuller [cost model](docs/OPERATIONS.md#cost-model-and-budget-controls) before proceeding.
 
+For a concrete reference, this is an example US pay-as-you-go budget using public prices
+checked on July 13, 2026. It is an estimate, not a quote; Twilio can change prices, rounds each
+call leg separately, and may add carrier fees and taxes.
+
+| Service or resource | Example assumption | Approximate cost |
+| --- | --- | ---: |
+| Twilio local numbers | One active line plus one synthetic-test line at $1.15 each | **$2.30/month** |
+| Forwarded voice calls | $0.0085/min inbound plus $0.0140/min outbound | **$0.0225/connected minute** |
+| Synthetic voice monitoring | Supplied M3 check enabled twice daily; about 60 one-minute, two-leg calls/month | **$1.35/month** |
+| Twilio Functions | First 10,000 invocations/month are free; then $0.0001/invocation | **Usually $0** at light personal usage |
+| GitHub Actions monitoring | Standard GitHub-hosted runner in a public repository | **$0** |
+| External heartbeat monitor | Optional; depends on the provider and plan you choose | **Provider-dependent** |
+| Call recording | Recording plus retained storage | **$0.0025/min + $0.0005/stored min/month** |
+| SMS traffic, if enabled | US long-code inbound or outbound SMS | **$0.0083/segment + carrier fees** |
+| Sole Proprietor A2P, if needed for US SMS | $4 Brand registration and $15 Campaign vetting; then $2/month | **About $19 once + $2/month** |
+
+That makes the example **voice-only baseline about $3.65/month** with both numbers and the
+twice-daily synthetic check, before real calls, recordings, taxes, and optional external
+monitoring. Adding the example Sole Proprietor A2P campaign makes the recurring baseline about
+**$5.65/month**, before actual SMS traffic. A voice-only deployment with automated synthetic
+calls disabled starts around **$2.30/month** before real usage. See Twilio’s current
+[Voice](https://www.twilio.com/en-us/voice/pricing/us),
+[SMS](https://www.twilio.com/en-us/sms/pricing/us),
+[Serverless](https://www.twilio.com/en-us/serverless/pricing), and
+[A2P fee](https://help.twilio.com/articles/1260803965530-What-pricing-and-fees-are-associated-with-the-A2P-10DLC-service-) pages before deployment.
+
 Recommended safeguards:
 
 - use a dedicated Twilio subaccount for this deployment;
