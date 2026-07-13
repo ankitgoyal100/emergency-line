@@ -1,0 +1,20 @@
+name: Schedule Canary (temporary)
+
+# Temporary diagnostic for GitHub's schedule-event creation. This workflow is
+# intentionally isolated: it checks out no code, reads no secrets, calls no
+# external service, and cannot originate a Twilio call.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions: {}
+
+jobs:
+  record-schedule-event:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Record scheduler event
+        run: |
+          printf 'event=%s\n' "${{ github.event_name }}"
+          date -u
