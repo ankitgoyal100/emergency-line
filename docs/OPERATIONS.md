@@ -37,6 +37,7 @@ The checks cover different layers and should not be described interchangeably:
 
 | Check | What it proves at that moment | What it does not prove |
 | --- | --- | --- |
+| Tokenized `/health` | Function runtime is responding; exact active/test inventory, test-number identity, webhook methods/URLs, account status, and balance of at least $5 pass read-only Twilio API checks | Forwarding TwiML, carrier/PSTN delivery, owner phone, two-way audio, SMS registration, or SMS delivery |
 | `status` | Tagged number inventory, configured webhooks, account-status visibility, and balance | Deployed code, call delivery, destination phone, or SMS registration |
 | `check:config` | Active/test-number webhook matches and a readable balance at or above the built-in $5 threshold | Deployed routing response or physical delivery |
 | `check:function` | A signed Function request returns TwiML with the configured destination | It does not place a call or verify the physical phone |
@@ -70,13 +71,19 @@ If you do not want the recurring synthetic-call cost or do not have an external 
 
 ### Optional HTTP health monitor
 
-An external HTTP monitor can request:
+Configure an external HTTPS monitor to send a `GET` request to:
 
 ```text
-https://<your-function-host>/health?token=<your-health-token>
+https://<your-function-host>/health
 ```
 
-Expect HTTP 200 and JSON with `"ok":true` only after both the destination and test number have been deployed. The response reports voice/SMS configuration readiness, not a completed call. Treat the full tokenized URL as a credential because browsers, monitors, and logs may retain query strings.
+Add the custom request header `X-Health-Token: <your-health-token>`. The Function intentionally rejects query-string tokens so the secret is less likely to appear in URLs, browser history, proxy/access logs, screenshots, or support exports.
+
+Require all three of the following: HTTP 200, JSON with `"ok":true`, and the exact keyword `emergency-line-m1-ok`. The Function authenticates the token before making any provider request, then performs read-only Twilio API checks for exact active/test inventory, test-number identity, webhook URLs and methods, active account status, and at least $5 of balance. A provider timeout or API failure returns 503; a detected configuration problem returns 500. Responses are deliberately sanitized and marked `Cache-Control: no-store`.
+
+This should be the primary non-ringing availability monitor because it does not depend on GitHub Actions scheduling and does not place calls or send messages. Prefer a five-minute interval and alert after two or three consecutive failures to reduce transient provider noise; that is about 8,640 Function invocations and 34,560 read-only Twilio API requests in a 30-day month. A three-minute interval produces about 14,400 Function invocations; with Twilio's example first-10,000-invocations allowance and $0.0001 overage price, that monitor alone would add about $0.44/month if the allowance is otherwise unused. Check current pricing.
+
+The check still cannot prove that the tagged active number is the unchanged number already shared with callers; it also cannot prove forwarding TwiML, the carrier/PSTN path, physical ringing, audio, A2P approval, or SMS delivery. Keep the deeper synthetic and human checks below. Treat the header value and monitor configuration as credentials; rotate the token if either appears in a public log or report.
 
 ## Monthly owner check
 
@@ -86,7 +93,7 @@ Expect HTTP 200 and JSON with `"ok":true` only after both the destination and te
 4. Run `npm run ring-test` and confirm by ear that the intended physical phone rings through the owner’s normal Silent/Focus settings.
 5. Place an inbound call from a different carrier/phone, answer, and confirm two-way audio.
 6. If SMS is enabled, test one outbound alert and one inbound forwarded text, including delivery status. Periodically retest the documented STOP, START, and HELP paths.
-7. Confirm scheduled monitoring is enabled and that an independent dead-man alert has recently received a heartbeat.
+7. Confirm the independent HTTP monitor has a recent successful `/health` check and that any optional scheduled workflow/dead-man monitor is still enabled.
 8. Review dependency/security update notices and follow [Upgrading and rollback](UPGRADING.md) for a reviewed release.
 
 Automated success is never a substitute for steps 4 and 5.

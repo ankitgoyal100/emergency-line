@@ -22,7 +22,7 @@ test('the private-module set is consistent across disk, the canonical list, and 
     .map((f) => f.replace('.private.js', ''))
     .sort();
   // Canonical expected set anchors against an unexpected add/delete on disk.
-  assert.deepEqual(onDisk, ['messages', 'security', 'twiml']);
+  assert.deepEqual(onDisk, ['messages', 'provider-health', 'security', 'twiml']);
   // The runtime helper's DEFAULT list must equal what's on disk, so a helper that
   // drifts from the actual private modules is caught (not just a duplicated literal).
   const helperDefault = Object.keys(installTwilioRuntime()).sort();

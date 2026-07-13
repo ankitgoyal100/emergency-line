@@ -16,7 +16,7 @@ class FakeResponse {
 // Twilio Functions expose `Runtime` and `Twilio` as globals. Handler unit tests
 // install fakes so `require(Runtime.getFunctions()[name].path)` resolves to the
 // real .private.js files on disk, and `new Twilio.Response()` works.
-function installTwilioRuntime(privateModules = ['twiml', 'messages', 'security']) {
+function installTwilioRuntime(privateModules = ['twiml', 'messages', 'security', 'provider-health']) {
   const map = {};
   for (const name of privateModules) {
     map[name] = { path: path.resolve(__dirname, `../../functions/${name}.private.js`) };

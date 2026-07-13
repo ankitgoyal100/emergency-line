@@ -39,7 +39,7 @@ The Standard API key drives routine number and status operations. The Auth Token
 | `DEFAULT_AREA_CODE` | No | Preferred three-digit US area code. It is only a preference and inventory may be unavailable. Leave blank to search US local inventory without an area-code filter. |
 | `INSTANCE_ID` | Strongly recommended | Stable 1–32 character lowercase name used in Twilio number tags. Use letters, numbers, and internal hyphens. Never change it after provisioning unless you intend to stop discovering the existing numbers. |
 | `FUNCTION_URL` | After first deploy | HTTPS base URL printed by the deployment. Do not include `/forward`, a query, credentials, or a fragment. |
-| `HEALTH_TOKEN` | Yes | Random token of at least 32 characters with adequate entropy. It protects `/health`; URLs containing it must be treated as secrets. |
+| `HEALTH_TOKEN` | Yes | Random token of at least 32 characters with adequate entropy. It protects `/health` through the `X-Health-Token` request header. Treat it and monitor configuration as secrets. Query-string tokens are rejected. |
 | `SMS_ENABLED` | Yes | Keep exactly `false` until the deployer’s own registration and real delivery tests pass. This is a gate, not an automated compliance check. |
 | `MESSAGE_BRAND` | If SMS is enabled | Sender label included in application-generated messages. Keep it accurate and consistent with the registered sender identity. Maximum 80 characters; no control characters. |
 | `HEARTBEAT_URL` | For scheduled monitoring | Secret ping URL supplied by an external dead-man monitor. It is not required for voice forwarding itself. |
@@ -50,7 +50,7 @@ Generate a health token locally:
 openssl rand -hex 24
 ```
 
-The deployment wrapper is designed to expose only `YOUR_REAL_NUMBER`, `TEST_NUMBER`, `HEALTH_TOKEN`, `SMS_ENABLED`, `MESSAGE_BRAND`, and `INSTANCE_ID` as Function runtime values. It supplies the Account SID/Auth Token to the deployment tool through a short-lived restricted file and does not upload `.env` as a file or the API-key secret. Verify the deployed variable list in Twilio and review `scripts/deploy.js` before relying on this boundary after an upgrade.
+The deployment wrapper uploads only `YOUR_REAL_NUMBER`, `TEST_NUMBER`, `HEALTH_TOKEN`, `SMS_ENABLED`, `MESSAGE_BRAND`, and `INSTANCE_ID` from the project configuration. It supplies the Account SID/Auth Token to the deployment tool through a short-lived restricted file and does not upload `.env` as a file or the API-key secret. Twilio Serverless also injects the owning Account SID and credentials into the runtime context because the Service is deployed with credentials included; the provider-backed `/health` check uses that context for read-only API requests. Treat code running in the Service as credentialed, keep `/health` token-protected, and verify the Service's `IncludeCredentials` setting plus deployed variable list after a deployment-tool upgrade.
 
 ## What must stay identical
 
@@ -69,7 +69,7 @@ A Standard API key may be unable to read the account-status resource; `status` c
 
 - Rotate an exposed API key secret by creating a replacement key, updating private configuration and repository secrets, validating read-only commands, then revoking the old key.
 - Rotate an exposed Auth Token in Twilio, then update `.env` and the Actions secret before running signed probes. The Auth Token is not intended to be a Function runtime variable, so token rotation alone does not require a deployment.
-- Rotate an exposed health token, redeploy, and update every HTTP monitor URL.
+- Rotate an exposed health token, redeploy, and update the protected header in every HTTP monitor.
 - Replace an exposed heartbeat URL in the monitoring provider and GitHub secret.
 - Do not rotate or release a phone number merely as a side effect of credential rotation. Number replacement is a separate, billable operation with a physical-phone confirmation gate.
 
