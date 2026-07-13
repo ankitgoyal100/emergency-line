@@ -62,7 +62,7 @@ async function requireNumberByTag(tc, client, tag) {
 }
 
 async function main() {
-  require('dotenv').config();
+  require('dotenv').config({ quiet: true });
   const tc = require('./twilio-client.js');
   const { createIo } = require('./io.js');
   const { runStatus } = require('./commands/status.js');

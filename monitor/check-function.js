@@ -31,7 +31,7 @@ async function probeFunction({ functionUrl, authToken, fetchImpl, lineNumber = '
 }
 
 async function main() {
-  require('dotenv').config();
+  require('dotenv').config({ quiet: true });
   const r = await probeFunction({
     functionUrl: process.env.FUNCTION_URL,
     authToken: process.env.TWILIO_AUTH_TOKEN,

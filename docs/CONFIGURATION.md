@@ -42,7 +42,6 @@ The Standard API key drives routine number and status operations. The Auth Token
 | `HEALTH_TOKEN` | Yes | Random token of at least 32 characters with adequate entropy. It protects `/health` through the `X-Health-Token` request header. Treat it and monitor configuration as secrets. Query-string tokens are rejected. |
 | `SMS_ENABLED` | Yes | Keep exactly `false` until the deployer’s own registration and real delivery tests pass. This is a gate, not an automated compliance check. |
 | `MESSAGE_BRAND` | If SMS is enabled | Sender label included in application-generated messages. Keep it accurate and consistent with the registered sender identity. Maximum 80 characters; no control characters. |
-| `HEARTBEAT_URL` | For scheduled monitoring | Secret ping URL supplied by an external dead-man monitor. It is not required for voice forwarding itself. |
 
 Generate a health token locally:
 
@@ -70,7 +69,6 @@ A Standard API key may be unable to read the account-status resource; `status` c
 - Rotate an exposed API key secret by creating a replacement key, updating private configuration and repository secrets, validating read-only commands, then revoking the old key.
 - Rotate an exposed Auth Token in Twilio, then update `.env` and the Actions secret before running signed probes. The Auth Token is not intended to be a Function runtime variable, so token rotation alone does not require a deployment.
 - Rotate an exposed health token, redeploy, and update the protected header in every HTTP monitor.
-- Replace an exposed heartbeat URL in the monitoring provider and GitHub secret.
 - Do not rotate or release a phone number merely as a side effect of credential rotation. Number replacement is a separate, billable operation with a physical-phone confirmation gate.
 
 Removing a value from the current file does not remove it from Git history, Actions logs/artifacts, provider logs, forks, caches, or backups. Follow [SECURITY.md](../SECURITY.md) if a private value was committed or published.

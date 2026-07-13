@@ -1,17 +1,17 @@
 name: Emergency Line Monitor
 
-# Scheduled uptime monitor (M1 config + M3 deep E2E) with heartbeat dead-man's-switch.
-# A manual dispatch runs M1 and the heartbeat only; it never runs M3.
+# Scheduled provider monitor (M1 config + M3 deep E2E).
+# A manual dispatch runs M1 only; it never runs M3.
 on:
   schedule:
-    # M1 (+ heartbeat) ~every 30 min, offset OFF the congested :00/:30 slot.
-    # Off-peak offsets can reduce scheduler contention, but scheduled runs and
-    # external heartbeat alerts can still be delayed or fail independently.
+    # M1 ~every 30 min, offset OFF the congested :00/:30 slot.
+    # Off-peak offsets can reduce scheduler contention, but scheduled runs can
+    # still be delayed or dropped. Use an independent /health monitor too.
     # These offsets also deliberately differ from the original schedule. A
     # cron edit forces GitHub to refresh its internal schedule registration if
     # a newly created/rebuilt repository has an active workflow but emits no
     # `schedule` events.
-    - cron: '11,41 * * * *'  # M1 (+ heartbeat) ~every 30 min (off-peak offset)
+    - cron: '11,41 * * * *'  # M1 ~every 30 min (off-peak offset)
     - cron: '23 */12 * * *'  # M3 deep E2E every 12h (away from :00 load)
   workflow_dispatch:
 
@@ -46,10 +46,9 @@ jobs:
           TWILIO_API_SECRET: ${{ secrets.TWILIO_API_SECRET }}
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           FUNCTION_URL: ${{ secrets.FUNCTION_URL }}
-          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
         run: |
           missing=()
-          for name in TWILIO_ACCOUNT_SID TWILIO_API_KEY TWILIO_API_SECRET TWILIO_AUTH_TOKEN FUNCTION_URL HEARTBEAT_URL; do
+          for name in TWILIO_ACCOUNT_SID TWILIO_API_KEY TWILIO_API_SECRET TWILIO_AUTH_TOKEN FUNCTION_URL; do
             if [[ -z "${!name}" ]]; then
               missing+=("$name")
             fi
@@ -76,14 +75,3 @@ jobs:
           FUNCTION_URL: ${{ secrets.FUNCTION_URL }}
           INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
         run: node monitor/check-e2e.js --yes
-      # Heartbeat is LAST and success-gated (no `if:`, so it runs only when every
-      # prior non-skipped step succeeded). This makes it a backup alert channel:
-      # a failed M1/M3 check skips this ping, and the uptime SaaS alerts on the
-      # missing heartbeat — independent of the GitHub failure email. A dead or
-      # auto-disabled workflow also stops pinging, so the SaaS catches that too.
-      # (A skipped M3 on the 30-min tick does not count as a failure, so the
-      # heartbeat still pings on those ticks.)
-      - name: Heartbeat (ping on success; a failed check skips it so the SaaS alerts)
-        env:
-          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
-        run: node monitor/heartbeat.js

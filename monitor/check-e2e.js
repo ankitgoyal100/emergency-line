@@ -60,7 +60,7 @@ async function verifyForwarding({ client, fromNumber, toNumber, pollStatus, pref
 }
 
 async function main() {
-  require('dotenv').config();
+  require('dotenv').config({ quiet: true });
   requireE2eAuthorization(process.argv.slice(2));
   const tc = require('../src/twilio-client.js');
   const { getTags } = require('../src/tags.js');

@@ -2,7 +2,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { assertForwardTwiml, probeFunction } = require('../monitor/check-function.js');
-const { pingHeartbeat } = require('../monitor/heartbeat.js');
 const security = require('../functions/security.private.js');
 
 test('assertForwardTwiml checks dial, caller ID, and (when given) the forwarded number', () => {
@@ -52,11 +51,4 @@ test('probeFunction fails when the deployed forwarding number does not match exp
   assert.equal(r.ok, false);
   assert.ok(r.problems.some((p) => /destination does not match/.test(p)));
   assert.ok(r.problems.every((p) => !p.includes('+15551234567')));
-});
-
-test('pingHeartbeat returns true on 2xx, false otherwise', async () => {
-  const fetchImpl = async () => ({ status: 200 });
-  assert.equal(await pingHeartbeat({ heartbeatUrl: 'https://h', fetchImpl }), true);
-  const bad = async () => ({ status: 500 });
-  assert.equal(await pingHeartbeat({ heartbeatUrl: 'https://h', fetchImpl: bad }), false);
 });
