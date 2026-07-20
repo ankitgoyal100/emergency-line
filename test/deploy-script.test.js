@@ -53,6 +53,23 @@ test('deploy dry run supports voice-only bootstrap without a test number', () =>
   assert.doesNotMatch(`${result.stdout}${result.stderr}`, /\+12125550123/);
 });
 
+test('deploy dry run allows a blank sender label while SMS is disabled', () => {
+  const result = spawnSync(process.execPath, [script, '--dry-run'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      TWILIO_ACCOUNT_SID: `AC${'a'.repeat(32)}`,
+      TWILIO_AUTH_TOKEN: 'b'.repeat(32),
+      YOUR_REAL_NUMBER: '+12125550123',
+      HEALTH_TOKEN: 'health-token-with-at-least-32-characters',
+      SMS_ENABLED: 'false',
+      MESSAGE_BRAND: '',
+    },
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('deploy preflight rejects the example forwarding number', () => {
   const result = spawnSync(process.execPath, [script, '--dry-run'], {
     cwd: root,
@@ -87,3 +104,45 @@ test('deploy preflight rejects copied placeholder secrets without echoing them',
   assert.match(result.stderr, /HEALTH_TOKEN/);
   assert.doesNotMatch(`${result.stdout}${result.stderr}`, new RegExp(placeholder));
 });
+
+test('deploy preflight requires an explicit sender label when SMS is enabled', () => {
+  const result = spawnSync(process.execPath, [script, '--dry-run'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      TWILIO_ACCOUNT_SID: `AC${'a'.repeat(32)}`,
+      TWILIO_AUTH_TOKEN: 'b'.repeat(32),
+      YOUR_REAL_NUMBER: '+12125550123',
+      HEALTH_TOKEN: 'health-token-with-at-least-32-characters',
+      SMS_ENABLED: 'true',
+      MESSAGE_BRAND: '',
+    },
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /MESSAGE_BRAND/);
+});
+
+for (const [name, messageBrand] of [
+  ['whitespace-only', '   '],
+  ['overlong', 'x'.repeat(81)],
+  ['control-character', 'Bad\nBrand'],
+]) {
+  test(`deploy preflight rejects a ${name} sender label`, () => {
+    const result = spawnSync(process.execPath, [script, '--dry-run'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        TWILIO_ACCOUNT_SID: `AC${'a'.repeat(32)}`,
+        TWILIO_AUTH_TOKEN: 'b'.repeat(32),
+        YOUR_REAL_NUMBER: '+12125550123',
+        HEALTH_TOKEN: 'health-token-with-at-least-32-characters',
+        SMS_ENABLED: 'true',
+        MESSAGE_BRAND: messageBrand,
+      },
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /MESSAGE_BRAND/);
+  });
+}

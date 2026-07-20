@@ -9,6 +9,14 @@ exports.handler = function (context, event, callback) {
   const stage = event.stage || 'initial';
   const completed = event.DialCallStatus === 'completed';
 
+  // The synthetic number is never a user-facing line or SMS sender. Sink an
+  // initial call when it appears on either side and fail closed on any forged
+  // or stale callback stage so it cannot ring the owner or send an alert.
+  if (twiml.isTestCaller(event.From, context.TEST_NUMBER)
+      || twiml.isTestCaller(to, context.TEST_NUMBER)) {
+    return callback(null, stage === 'initial' ? twiml.buildSinkTwiml() : '<Response/>');
+  }
+
   if (!/^\+[1-9]\d{7,14}$/.test(realNumber || '') || !/^\+[1-9]\d{7,14}$/.test(to || '')) {
     return callback(null, twiml.buildUnavailableTwiml());
   }
@@ -21,9 +29,6 @@ exports.handler = function (context, event, callback) {
 
   // Inbound call: sink synthetic/test-number calls, else place the FIRST dial.
   if (stage === 'initial') {
-    if (twiml.isTestCaller(event.From, context.TEST_NUMBER)) {
-      return callback(null, twiml.buildSinkTwiml());
-    }
     return callback(null, dial('retry'));
   }
 

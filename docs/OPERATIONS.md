@@ -13,7 +13,7 @@ The main cost sources are:
 | Normal setup | Two recurring local-number rentals: active and synthetic-test numbers |
 | Answered forwarded call | Applicable inbound call leg plus the outbound leg to the owner |
 | Retry/unanswered call | Additional outbound attempt, followed by recording and storage if the application voicemail is reached |
-| SMS traffic | Inbound messages and carrier fees can apply even while application forwarding is disabled; enabling SMS adds outbound segments and Brand/campaign fees, and long bodies can consume multiple segments |
+| SMS traffic | Inbound messages and carrier fees can apply even though the application always discards them; enabling owner notifications adds outbound segments and Brand/campaign fees |
 | `check:e2e` | A billable synthetic call from the test number to the active number; the signed HTTP preflight itself is not a call |
 | `ring-test` | A billable direct call from the active number to the owner’s phone |
 | `swap` | A third recurring number from purchase until either provisional rollback or old-number release, plus its synthetic verification call |
@@ -91,7 +91,7 @@ The check still cannot prove that the tagged active number is the unchanged numb
 3. Run `npm run check:config`, `npm run check:function`, and—after reviewing the billable-call warning—`npm run check:e2e -- --yes`.
 4. Run `npm run ring-test` and confirm by ear that the intended physical phone rings through the owner’s normal Silent/Focus settings.
 5. Place an inbound call from a different carrier/phone, answer, and confirm two-way audio.
-6. If SMS is enabled, test one outbound alert and one inbound forwarded text, including delivery status. Periodically retest the documented STOP, START, and HELP paths.
+6. If SMS is enabled, test one automated missed-call or voicemail notification, verify inbound texts are not relayed, and inspect delivery status. Periodically retest the documented STOP, START, and HELP paths.
 7. Confirm the independent HTTP monitor has a recent successful `/health` check and that any optional scheduled workflow/dead-man monitor is still enabled.
 8. Review dependency/security update notices and follow [Upgrading and rollback](UPGRADING.md) for a reviewed release.
 
