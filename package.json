@@ -1,6 +1,6 @@
 {
   "name": "emergency-line",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A self-hosted emergency phone line that forwards urgent calls and can send automated missed-call notifications.",
   "private": true,
   "license": "MIT",
