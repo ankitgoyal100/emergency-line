@@ -23,9 +23,9 @@ For a normal inbound call, the deployed Function:
 3. offers a voicemail if neither dial completes; and
 4. optionally sends the owner a missed-call or voicemail text.
 
-Inbound texts can optionally be forwarded to the owner. Application forwarding and alerts are **off by default** because US application-to-person messaging usually requires the deployer’s own carrier registration. Voice forwarding works independently of SMS. `SMS_ENABLED=false` does not make a Twilio number incapable of receiving carrier SMS; inbound texts are discarded by the application but may still create Twilio/carrier usage.
+Inbound human-authored texts are never relayed. Automated missed-call and voicemail alerts are **off by default** because US application-to-person messaging usually requires the deployer’s own carrier registration. Voice forwarding works independently of SMS. `SMS_ENABLED=false` does not make a Twilio number incapable of receiving carrier SMS; inbound texts are always discarded by the application but may still create Twilio/carrier usage.
 
-Anyone who knows the dedicated number can call or text it. There is intentionally no trusted-caller list. Treat both active and synthetic-test numbers as private: unwanted traffic can make the phone ring or create Twilio charges.
+Anyone who knows the dedicated number can call it. They can also send texts, which the application discards but which may still create Twilio/carrier usage. There is intentionally no trusted-caller list. Treat both active and synthetic-test numbers as private: unwanted traffic can make the phone ring or create Twilio charges.
 
 ## Important limitations
 
@@ -41,7 +41,7 @@ Anyone who knows the dedicated number can call or text it. There is intentionall
 Running this project creates charges in **your** Twilio account. Setup normally purchases two local numbers: the dedicated line and a synthetic-test line. Calls can incur an inbound leg and a simultaneous outbound leg; retries, SMS segments, recordings, recording storage, carrier fees, registration, Functions usage, and monitoring can add charges. Twilio pricing and carrier rules change, so review [Twilio’s current Voice pricing](https://www.twilio.com/en-us/voice/pricing/us), Messaging/A2P pricing, and the fuller [cost model](docs/OPERATIONS.md#cost-model-and-budget-controls) before proceeding.
 
 For a concrete reference, this is an example US pay-as-you-go budget using public prices
-checked on July 13, 2026. It is an estimate, not a quote; Twilio can change prices, rounds each
+checked on July 13, 2026, with the A2P Brand fee rechecked July 20. It is an estimate, not a quote; Twilio can change prices, rounds each
 call leg separately, and may add carrier fees and taxes.
 
 | Service or resource | Example assumption | Approximate cost |
@@ -54,7 +54,7 @@ call leg separately, and may add carrier fees and taxes.
 | External HTTP monitor | Optional; Better Stack and similar providers may offer a sufficient free tier | **Often $0; provider-dependent** |
 | Call recording | Recording plus retained storage | **$0.0025/min + $0.0005/stored min/month** |
 | SMS traffic, if enabled | US long-code inbound or outbound SMS | **$0.0083/segment + carrier fees** |
-| Sole Proprietor A2P, if needed for US SMS | $4 Brand registration and $15 Campaign vetting; then $2/month | **About $19 once + $2/month** |
+| Sole Proprietor A2P, if needed for US SMS | $4.50 Brand registration and $15 Campaign vetting; then $2/month | **About $19.50 once + $2/month** |
 
 That makes the example **voice-only baseline about $3.65/month** with both numbers and the
 twice-daily synthetic check, before real calls, recordings, taxes, and optional external
@@ -179,7 +179,7 @@ Repeat the physical-phone checks after device/contact changes, carrier changes, 
 
 Leave `SMS_ENABLED=false` for a voice-only deployment. Before enabling SMS, the deployer must complete their own registration, consent disclosures, sender assignment, and delivery tests. Do not copy another operator’s campaign IDs, attestations, legal text, or consent claims.
 
-See [SMS and US A2P registration](docs/SMS-A2P.md) and the [neutral legal templates](templates/legal/README.md). Run `npm run sms-readiness` once as a provider preflight while disabled and again after enabling and completing real delivery/STOP/START/HELP tests. Those human confirmations make no provider changes and are not proof of compliance. The templates are starting points, not legal advice and not evidence that consent occurred.
+If enabled, SMS is limited to automated missed-call and voicemail notifications to the configured owner; inbound human-authored text is never relayed. See [SMS and US A2P registration](docs/SMS-A2P.md) and the [neutral legal templates](templates/legal/README.md). Run `npm run sms-readiness` once as a provider preflight while disabled and again after enabling and completing real notification/no-relay/STOP/START/HELP tests. Those human confirmations make no provider changes and are not proof of compliance. The templates are starting points, not legal advice and not evidence that consent occurred.
 
 ## Commands
 
@@ -197,7 +197,7 @@ See [SMS and US A2P registration](docs/SMS-A2P.md) and the [neutral legal templa
 | `npm run check:function` | Probe the deployed forwarding TwiML | Network request; does not ring the phone |
 | `npm run check:config` | Check webhooks and account balance | Read-only Twilio API calls |
 | `npm run check:e2e -- --yes` | After a non-ringing sink preflight, call from the test line into the dedicated line | **Billable synthetic call** |
-| `npm run sms-readiness` | Require exact human confirmation of approval, sender, webhook, delivery, HELP, STOP/blocked, and START/restored checks | Read-only; makes no provider changes |
+| `npm run sms-readiness` | Require exact human confirmation of approval, sender, webhook, notification delivery, no-relay, HELP, STOP/blocked, and START/restored checks | Read-only; makes no provider changes |
 | `npm run release-numbers -- --dry-run` | Preview the tagged active/test numbers that would be released | Read-only |
 | `npm run release-numbers` | Release this deployment’s tagged active/test numbers | **Destructive** |
 

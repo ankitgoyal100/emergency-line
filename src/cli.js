@@ -49,6 +49,7 @@ function wire(deps, options = {}) {
     instanceId: env && env.INSTANCE_ID,
     realNumber: env && env.YOUR_REAL_NUMBER,
     smsEnabled: env && env.SMS_ENABLED,
+    messageBrand: env && env.MESSAGE_BRAND,
     ...options,
   };
 }

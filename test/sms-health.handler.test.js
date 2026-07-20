@@ -49,6 +49,7 @@ function healthyHealthContext(overrides = {}) {
     DOMAIN_NAME: domain,
     YOUR_REAL_NUMBER: '+12025550103',
     TEST_NUMBER: testNumber,
+    MESSAGE_BRAND: 'Emergency Line',
     getTwilioClient: () => client,
     ...overrides,
   };
@@ -58,32 +59,24 @@ function healthEvent(token = 'secret', headerName = 'x-health-token') {
   return { request: { headers: { [headerName]: token } } };
 }
 
-test('inbound SMS is forwarded to the real number, labeled with sender', async () => {
-  let sent = null;
-  const context = {
-    YOUR_REAL_NUMBER: '+15552223333', TEST_NUMBER: '+15559998888',
-    SMS_ENABLED: 'true', MESSAGE_BRAND: 'Family Emergency Line',
-    getTwilioClient: () => ({ messages: { create: async (a) => { sent = a; return { sid: 'SM1' }; } } }),
-  };
-  await run(sms, context, { To: '+15550001111', From: '+15551234567', Body: 'need help' });
-  assert.equal(sent.from, '+15550001111');
-  assert.equal(sent.to, '+15552223333');
-  assert.equal(
-    sent.body,
-    'Family Emergency Line: Text from +15551234567: need help Reply STOP to opt out.'
-  );
-});
-
-test('inbound SMS from the test number is a probe: not forwarded', async () => {
-  let called = false;
-  const context = {
-    YOUR_REAL_NUMBER: '+15552223333', TEST_NUMBER: '+15559998888',
-    SMS_ENABLED: 'true',
-    getTwilioClient: () => ({ messages: { create: async () => { called = true; return {}; } } }),
-  };
-  await run(sms, context, { To: '+15550001111', From: '+15559998888', Body: 'probe' });
-  assert.equal(called, false);
-});
+for (const [name, enabled, event] of [
+  ['human-authored text while notifications are enabled', 'true', { From: '+15551234567', Body: 'need help' }],
+  ['human-authored text while notifications are disabled', 'false', { From: '+15551234567', Body: 'hello' }],
+  ['provider-handled STOP event', 'true', { From: '+15551234567', Body: 'STOP', OptOutType: 'STOP' }],
+  ['text from the synthetic test number', 'true', { From: '+15559998888', Body: 'probe' }],
+]) {
+  test(`inbound SMS discards ${name}`, async () => {
+    let called = false;
+    const context = {
+      YOUR_REAL_NUMBER: '+15552223333', TEST_NUMBER: '+15559998888',
+      SMS_ENABLED: enabled, MESSAGE_BRAND: 'Family Emergency Line',
+      getTwilioClient: () => ({ messages: { create: async () => { called = true; return {}; } } }),
+    };
+    const result = await run(sms, context, { To: '+15550001111', ...event });
+    assert.equal(result, '<Response/>');
+    assert.equal(called, false);
+  });
+}
 
 test('health reports voice ready but SMS not ready by default', async () => {
   const context = healthyHealthContext();
@@ -157,15 +150,4 @@ test('healthy health response exposes no numbers, SIDs, URLs, tags, or balance',
   for (const privateValue of ['+12025550101', '+12025550102', '+12025550103', 'ACaaaa', 'https://', 'emergency-line-active', '10.00']) {
     assert.equal(body.includes(privateValue), false, `response exposed ${privateValue}`);
   }
-});
-
-test('inbound SMS is silently accepted but not forwarded when disabled', async () => {
-  let called = false;
-  const context = {
-    YOUR_REAL_NUMBER: '+15552223333', TEST_NUMBER: '+15559998888',
-    getTwilioClient: () => ({ messages: { create: async () => { called = true; return {}; } } }),
-  };
-  const result = await run(sms, context, { To: '+15550001111', From: '+15551234567', Body: 'need help' });
-  assert.equal(result, '<Response/>');
-  assert.equal(called, false);
 });

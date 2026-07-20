@@ -140,7 +140,7 @@ async function runSwap({
 
   io.info(`New emergency number: ${bought.phoneNumber}`);
   io.info('ACTION: update the saved emergency contact, recheck device ringer/contact settings, and repeat a real inbound call.');
-  io.info('ACTION: keep SMS_ENABLED=false until messaging registration and two-way SMS tests pass for this sender.');
+  io.info('ACTION: keep SMS_ENABLED=false until messaging registration and notification/no-relay/STOP/START/HELP tests pass for this sender.');
   return bought.phoneNumber;
 }
 

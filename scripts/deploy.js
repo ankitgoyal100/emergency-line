@@ -66,7 +66,9 @@ if (process.env.HEALTH_TOKEN.length < 32
     || new Set(process.env.HEALTH_TOKEN).size < 8
     || placeholderPattern.test(process.env.HEALTH_TOKEN)) invalid.push('HEALTH_TOKEN');
 if (process.env.SMS_ENABLED && !/^(?:true|false)$/.test(process.env.SMS_ENABLED)) invalid.push('SMS_ENABLED');
-if (process.env.MESSAGE_BRAND && (process.env.MESSAGE_BRAND.length > 80 || /[\r\n\t]/.test(process.env.MESSAGE_BRAND))) invalid.push('MESSAGE_BRAND');
+if (process.env.SMS_ENABLED === 'true' && (!process.env.MESSAGE_BRAND || !process.env.MESSAGE_BRAND.trim())) invalid.push('MESSAGE_BRAND (required when SMS is enabled)');
+if (process.env.MESSAGE_BRAND
+    && (!process.env.MESSAGE_BRAND.trim() || process.env.MESSAGE_BRAND.length > 80 || /[\r\n\t]/.test(process.env.MESSAGE_BRAND))) invalid.push('MESSAGE_BRAND');
 if (process.env.INSTANCE_ID
     && (!/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(process.env.INSTANCE_ID)
       || placeholderPattern.test(process.env.INSTANCE_ID))) invalid.push('INSTANCE_ID');
@@ -98,7 +100,7 @@ const runtimeValues = {
   HEALTH_TOKEN: process.env.HEALTH_TOKEN,
   TEST_NUMBER: process.env.TEST_NUMBER || '',
   SMS_ENABLED: process.env.SMS_ENABLED || 'false',
-  MESSAGE_BRAND: process.env.MESSAGE_BRAND || 'Emergency Line',
+  MESSAGE_BRAND: process.env.MESSAGE_BRAND || '',
   INSTANCE_ID: process.env.INSTANCE_ID || '',
 };
 

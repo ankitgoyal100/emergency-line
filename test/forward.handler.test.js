@@ -35,6 +35,12 @@ test('initial call from the test number returns the sink (no dial)', async () =>
   assert.doesNotMatch(xml, /<Dial/);
 });
 
+test('initial call to the synthetic test number returns the sink and never rings the owner', async () => {
+  const xml = await run(forward, ctx(), { To: '+15559998888', From: '+15551234567' });
+  assert.match(xml, /health ok/);
+  assert.doesNotMatch(xml, /<Dial/);
+});
+
 test('invalid destination configuration fails closed without dialing', async () => {
   const xml = await run(forward, ctx({ YOUR_REAL_NUMBER: 'replace-me' }), {
     To: '+15550001111', From: '+15551234567',
@@ -80,8 +86,15 @@ test('notify stage sends the missed-call SMS from the line to the real number', 
   await run(forward, context, { To: '+15550001111', From: '+15551234567', stage: 'notify', RecordingUrl: 'https://r/1' });
   assert.equal(sent.from, '+15550001111');
   assert.equal(sent.to, '+15552223333');
-  assert.match(sent.body, /Family Emergency Line: Missed emergency call from \+15551234567/);
-  assert.match(sent.body, /Reply STOP to opt out\.$/);
+  assert.match(sent.body, /Family Emergency Line: Automated voicemail notification from \+15551234567/);
+  assert.match(sent.body, /Reply HELP for help or STOP to opt out\.$/);
+});
+
+test('notify stage sends the no-voicemail message when no recording URL exists', async () => {
+  let sent = null;
+  const context = ctx({ getTwilioClient: () => ({ messages: { create: async (a) => { sent = a; return { sid: 'SM1' }; } } }) });
+  await run(forward, context, { To: '+15550001111', From: '+15551234567', stage: 'notify' });
+  assert.match(sent.body, /Family Emergency Line: Automated missed-call notification from \+15551234567\. No voicemail was left\./);
 });
 
 test('notify stage sends nothing when SMS has not been explicitly enabled', async () => {
@@ -93,3 +106,16 @@ test('notify stage sends nothing when SMS has not been explicitly enabled', asyn
   await run(forward, context, { To: '+15550001111', From: '+15551234567', stage: 'notify' });
   assert.equal(called, false);
 });
+
+for (const event of [
+  { To: '+15559998888', From: '+15551234567', stage: 'notify', RecordingUrl: 'https://r/1' },
+  { To: '+15550001111', From: '+15559998888', stage: 'notify', RecordingUrl: 'https://r/1' },
+]) {
+  test('synthetic-number callback cannot originate an SMS', async () => {
+    let called = false;
+    const context = ctx({ getTwilioClient: () => ({ messages: { create: async () => { called = true; return {}; } } }) });
+    const xml = await run(forward, context, event);
+    assert.equal(xml, '<Response/>');
+    assert.equal(called, false);
+  });
+}
