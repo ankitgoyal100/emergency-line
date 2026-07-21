@@ -73,7 +73,9 @@ for (const [name, enabled, event] of [
       getTwilioClient: () => ({ messages: { create: async () => { called = true; return {}; } } }),
     };
     const result = await run(sms, context, { To: '+15550001111', ...event });
-    assert.equal(result, '<Response/>');
+    assert.notEqual(typeof result, 'string', 'must return TwiML, not a text/plain string');
+    assert.ok(result instanceof Twilio.twiml.MessagingResponse);
+    assert.equal(result.toString(), '<?xml version="1.0" encoding="UTF-8"?><Response/>');
     assert.equal(called, false);
   });
 }
